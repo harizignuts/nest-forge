@@ -1,8 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 
@@ -23,11 +20,17 @@ describe('AppController (e2e)', () => {
     await adapter.getInstance().ready();
   });
 
-  it('/ (GET)', () => {
+  it('/ (GET) - Redirects to health', () => {
+    return request(app.getHttpServer()).get('/').expect(302).expect('location', 'health');
+  });
+
+  it('/health (GET) - Returns health status', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/health')
       .expect(200)
-      .expect('Hello World!');
+      .expect((res) => {
+        expect((res.body as { status: string }).status).toBe('ok');
+      });
   });
 
   afterAll(async () => {
