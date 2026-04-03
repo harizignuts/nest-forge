@@ -36,4 +36,4 @@ COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/LICENSE ./LICENSE
 
 EXPOSE 3000
-CMD ["node", "dist/main"]
+CMD ["pnpm", "run", "start:docker"]
