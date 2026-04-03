@@ -1,11 +1,11 @@
 import 'dotenv/config';
-import { defineConfig, env } from '@prisma/config';
+import { defineConfig } from '@prisma/config';
 
 export default defineConfig({
   schema: './prisma/models',
   datasource: {
-    // Adding a fallback string prevents the 'PrismaConfigEnvError' during Docker build
-    url: env('DATABASE_URL') ?? 'postgresql://dummy:dummy@localhost:5432/dummy',
+    // Standard JS fallback ensures the build-time 'prisma generate' succeeds
+    url: process.env.DATABASE_URL ?? 'postgresql://placeholder:5432/db',
   },
   migrations: {
     path: './prisma/migrations',

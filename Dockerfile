@@ -7,16 +7,15 @@ COPY package.json pnpm-lock.yaml .npmrc ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" \
+    SKIP_PRISMA_GENERATE=true \
     pnpm install --frozen-lockfile
 
 FROM base AS builder
 COPY . .
 COPY --from=deps /app/node_modules ./node_modules
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" \
-    pnpm run build:swc
+RUN pnpm prisma generate
+RUN pnpm run build:swc
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" \
     pnpm install --frozen-lockfile
 
 FROM base AS runner 
