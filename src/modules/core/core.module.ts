@@ -1,11 +1,12 @@
 import { Global, Module } from '@nestjs/common';
-import { ConfigModule } from './config/config.module';
-import { DatabaseModule } from './database/database.module';
-import { MailModule } from './mail/mail.module';
+import { ConfigModule } from './config';
+import { DatabaseModule } from './database';
+import { MailModule } from './mail';
+import { RedisModule } from './cache';
 
 @Global()
 @Module({
-  imports: [ConfigModule, DatabaseModule, MailModule],
-  exports: [ConfigModule, DatabaseModule, MailModule],
+  imports: [ConfigModule, DatabaseModule, MailModule, RedisModule],
+  exports: [ConfigModule, DatabaseModule, MailModule, RedisModule],
 })
 export class CoreModule {}
