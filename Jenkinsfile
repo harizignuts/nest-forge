@@ -27,19 +27,15 @@ pipeline {
                 stage('Build & Push (Multi-Arch)') {
                     steps {
                         script {
-                            // 1. Log in to GHCR
                             sh "echo ${GHCR_CREDS_PSW} | docker login ${REGISTRY} -u ${GHCR_CREDS_USR} --password-stdin"
 
-                            // 2. Setup the builder (Required for multi-platform)
                             sh "docker buildx create --name jenkins-builder --use || docker buildx use jenkins-builder"
                             sh "docker buildx inspect --bootstrap"
 
-                            // 3. The Unified Build Command
-                            // This creates one tag that works on BOTH architectures
                             echo "Starting Multi-Platform build for linux/amd64 and linux/arm64..."
                             sh """
                                 docker buildx build \
-                                --platform linux/amd64,linux/arm64 \
+                                --platform linux/arm64 \
                                 -t ${REGISTRY}/${IMAGE_BASE}:${env.BUILD_ID} \
                                 -t ${REGISTRY}/${IMAGE_BASE}:latest \
                                 --push .
