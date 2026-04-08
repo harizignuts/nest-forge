@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         REGISTRY = "ghcr.io"
-        IMAGE_BASE = "harizignuts/nest-forge"
+        IMAGE_BASE = "harimalam/nest-forge"
         
         GHCR_CREDS   = credentials('ghcr-login')
         SSH_KEY_ID   = 'vm-arm-01-ssh-key' 
@@ -24,26 +24,37 @@ pipeline {
                     }
                 }
 
-                stage('Build & Push (ARM64)') {
+              stage('Build & Push') {
                     steps {
                         script {
-                            sh "docker buildx create --name jenkins-builder --use || docker buildx use jenkins-builder"
-
-                            sh "docker buildx inspect --bootstrap"
+                            def agentArch = sh(script: "uname -m", returnStdout: true).trim()
+                            echo "Detected Agent Architecture: ${agentArch}"
 
                             sh "echo ${GHCR_CREDS_PSW} | docker login ${REGISTRY} -u ${GHCR_CREDS_USR} --password-stdin"
 
-                            sh """
-                                docker buildx build \
-                                --platform linux/arm64 \
-                                -t ${REGISTRY}/${IMAGE_BASE}:${env.BUILD_ID} \
-                                -t ${REGISTRY}/${IMAGE_BASE}:latest \
-                                --push .
-                            """
+                            if (agentArch == 'aarch64') {
+                                echo "Running on ARM agent. Performing native build..."
+                                sh """
+                                    docker build \
+                                    -t ${REGISTRY}/${IMAGE_BASE}:${env.BUILD_ID} \
+                                    -t ${REGISTRY}/${IMAGE_BASE}:latest \
+                                    --push .
+                                """
+                            } else {
+                                echo "Running on x86 agent. Performing Multi-arch Buildx build..."
+                                sh "docker buildx create --name jenkins-builder --use || docker buildx use jenkins-builder"
+                                sh "docker buildx inspect --bootstrap"
+                                sh """
+                                    docker buildx build \
+                                    --platform linux/arm64 \
+                                    -t ${REGISTRY}/${IMAGE_BASE}:${env.BUILD_ID} \
+                                    -t ${REGISTRY}/${IMAGE_BASE}:latest \
+                                    --push .
+                                """
+                            }
                         }
                     }
                 }
-
                 stage('Remote Deploy via SSH') {
                     steps {
                         sshagent([env.SSH_KEY_ID]) {
